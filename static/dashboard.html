@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Gateway — Live Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f1117;
+            color: #e4e4e7;
+            padding: 24px;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #27272a;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #71717a;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* --- Summary Cards --- */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            padding: 20px;
+            transition: border-color 0.2s;
+        }
+
+        .card:hover { border-color: #3f3f46; }
+
+        .card-label {
+            font-size: 0.8rem;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .card-value.green { color: #22c55e; }
+        .card-value.blue { color: #3b82f6; }
+        .card-value.amber { color: #f59e0b; }
+        .card-value.purple { color: #a78bfa; }
+
+        /* --- Chart Panels --- */
+        .charts {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .panel {
+            background: #18181b;
+            border: 1px solid #27272a;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .panel-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #a1a1aa;
+        }
+
+        .panel canvas { max-height: 280px; }
+
+        /* --- Bottom Row: Top Consumers + Recent Requests --- */
+        .bottom-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 16px;
+        }
+
+        /* --- Recent Requests Table --- */
+        .table-wrapper {
+            max-height: 360px;
+            overflow-y: auto;
+        }
+
+        .table-wrapper::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 3px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 8px 12px;
+            color: #71717a;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid #27272a;
+            position: sticky;
+            top: 0;
+            background: #18181b;
+        }
+
+        td {
+            padding: 6px 12px;
+            border-bottom: 1px solid #1e1e22;
+            font-variant-numeric: tabular-nums;
+        }
+
+        tr:hover td { background: #1c1c21; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-2xx { background: #052e16; color: #4ade80; }
+        .badge-3xx { background: #1a1a2e; color: #818cf8; }
+        .badge-4xx { background: #451a03; color: #fb923c; }
+        .badge-5xx { background: #450a0a; color: #f87171; }
+
+        .method {
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+
+        .method-GET { color: #22c55e; }
+        .method-POST { color: #3b82f6; }
+        .method-PUT { color: #f59e0b; }
+        .method-DELETE { color: #ef4444; }
+        .method-PATCH { color: #a78bfa; }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .charts, .bottom-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⚡ API Gateway Dashboard</h1>
+        <div class="status">
+            <span class="status-dot"></span>
+            <span id="last-updated">Connecting...</span>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="cards">
+        <div class="card">
+            <div class="card-label">Total Requests</div>
+            <div class="card-value blue" id="total-requests">—</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Current RPM</div>
+            <div class="card-value green" id="current-rpm">—</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Avg Latency</div>
+            <div class="card-value amber" id="avg-latency">—</div>
+        </div>
+        <div class="card">
+            <div class="card-label">Active Consumers</div>
+            <div class="card-value purple" id="unique-consumers">—</div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts">
+        <div class="panel">
+            <div class="panel-title">Requests per Minute (Last 60 min)</div>
+            <canvas id="rpmChart"></canvas>
+        </div>
+        <div class="panel">
+            <div class="panel-title">Response Status Breakdown</div>
+            <canvas id="errorChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="bottom-row">
+        <div class="panel">
+            <div class="panel-title">Top Consumers</div>
+            <canvas id="consumersChart"></canvas>
+        </div>
+        <div class="panel">
+            <div class="panel-title">Recent Requests</div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Path</th>
+                            <th>Status</th>
+                            <th>Latency</th>
+                            <th>Client</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Chart.js Global Defaults ---
+        Chart.defaults.color = '#71717a';
+        Chart.defaults.borderColor = '#27272a';
+        Chart.defaults.font.family = "'Segoe UI', sans-serif";
+
+        // --- RPM Line Chart ---
+        const rpmCtx = document.getElementById('rpmChart').getContext('2d');
+        const rpmChart = new Chart(rpmCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Requests / min',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 0,
+                    pointHitRadius: 10,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { maxTicksLimit: 12 } },
+                    y: { beginAtZero: true, grid: { color: '#1e1e22' } }
+                }
+            }
+        });
+
+        // --- Error Doughnut Chart ---
+        const errorCtx = document.getElementById('errorChart').getContext('2d');
+        const errorChart = new Chart(errorCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['2xx Success', '3xx Redirect', '4xx Client Error', '5xx Server Error'],
+                datasets: [{
+                    data: [0, 0, 0, 0],
+                    backgroundColor: ['#22c55e', '#818cf8', '#fb923c', '#ef4444'],
+                    borderColor: '#18181b',
+                    borderWidth: 3,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 16, usePointStyle: true, pointStyle: 'circle' }
+                    }
+                }
+            }
+        });
+
+        // --- Top Consumers Bar Chart ---
+        const consCtx = document.getElementById('consumersChart').getContext('2d');
+        const consumersChart = new Chart(consCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Requests',
+                    data: [],
+                    backgroundColor: 'rgba(167, 139, 250, 0.6)',
+                    borderColor: '#a78bfa',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, grid: { color: '#1e1e22' } },
+                    y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+                }
+            }
+        });
+
+        // --- Status badge helper ---
+        function statusBadge(code) {
+            let cls = 'badge-2xx';
+            if (code >= 500) cls = 'badge-5xx';
+            else if (code >= 400) cls = 'badge-4xx';
+            else if (code >= 300) cls = 'badge-3xx';
+            return `<span class="badge ${cls}">${code}</span>`;
+        }
+
+        // --- Truncate client ID for display ---
+        function shortClient(id) {
+            if (!id) return '—';
+            if (id.length > 20) return id.substring(0, 18) + '…';
+            return id;
+        }
+
+        // --- Fetch and Update Dashboard ---
+        async function updateDashboard() {
+            try {
+                const [summaryRes, rpmRes, errorsRes, consumersRes, recentRes] = await Promise.all([
+                    fetch('/dashboard/api/summary'),
+                    fetch('/dashboard/api/rpm'),
+                    fetch('/dashboard/api/errors'),
+                    fetch('/dashboard/api/top-consumers'),
+                    fetch('/dashboard/api/recent'),
+                ]);
+
+                const summary = await summaryRes.json();
+                const rpm = await rpmRes.json();
+                const errors = await errorsRes.json();
+                const consumers = await consumersRes.json();
+                const recent = await recentRes.json();
+
+                // --- Summary Cards ---
+                document.getElementById('total-requests').textContent = summary.total_requests.toLocaleString();
+                document.getElementById('current-rpm').textContent = summary.current_rpm.toLocaleString();
+                document.getElementById('avg-latency').textContent = summary.avg_latency_ms.toFixed(1) + ' ms';
+                document.getElementById('unique-consumers').textContent = summary.unique_consumers.toLocaleString();
+
+                // --- RPM Chart ---
+                rpmChart.data.labels = rpm.map(r => r.time);
+                rpmChart.data.datasets[0].data = rpm.map(r => r.count);
+                rpmChart.update('none');
+
+                // --- Error Doughnut ---
+                errorChart.data.datasets[0].data = [
+                    errors['2xx'] || 0,
+                    errors['3xx'] || 0,
+                    errors['4xx'] || 0,
+                    errors['5xx'] || 0,
+                ];
+                errorChart.update('none');
+
+                // --- Top Consumers ---
+                consumersChart.data.labels = consumers.map(c => shortClient(c.client_id));
+                consumersChart.data.datasets[0].data = consumers.map(c => c.request_count);
+                consumersChart.update('none');
+
+                // --- Recent Requests Table ---
+                const tbody = document.getElementById('recent-tbody');
+                tbody.innerHTML = recent.slice(0, 50).map(r => `
+                    <tr>
+                        <td><span class="method method-${r.method}">${r.method}</span></td>
+                        <td>${r.path}</td>
+                        <td>${statusBadge(r.status_code)}</td>
+                        <td>${r.latency_ms.toFixed(1)} ms</td>
+                        <td title="${r.client_id}">${shortClient(r.client_id)}</td>
+                    </tr>
+                `).join('');
+
+                // --- Update timestamp ---
+                const now = new Date();
+                document.getElementById('last-updated').textContent =
+                    `Live · Updated ${now.toLocaleTimeString()}`;
+
+            } catch (err) {
+                console.error('Dashboard update failed:', err);
+                document.getElementById('last-updated').textContent = 'Connection lost';
+            }
+        }
+
+        // Initial load + auto-refresh every 5 seconds
+        updateDashboard();
+        setInterval(updateDashboard, 5000);
+    </script>
+</body>
+</html>
