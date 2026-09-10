@@ -3,6 +3,9 @@
 Uses a Lua script for atomic check-and-set operations on Redis Sorted Sets.
 Each request is logged as a member in a sorted set keyed by client ID,
 with the score being the request timestamp.
+
+Author: Pushkar Reddy (@pushkarreddyy)
+Repository: https://github.com/pushkarreddyy/api-rate-limiter-proxy
 """
 
 import time

@@ -5,6 +5,9 @@ Runs before every proxied request to:
 2. Check the sliding window rate limit.
 3. Return 429 if the client has exceeded their quota.
 4. After the response is produced, record analytics.
+
+Author: Pushkar Reddy (@pushkarreddyy)
+Repository: https://github.com/pushkarreddyy/api-rate-limiter-proxy
 """
 
 import time

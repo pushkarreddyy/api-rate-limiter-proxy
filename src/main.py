@@ -5,6 +5,9 @@ Creates the app with:
 - Rate limit middleware.
 - Dashboard routes (mounted first so they take priority).
 - Proxy catch-all route (mounted last).
+
+Author: Pushkar Reddy (@pushkarreddyy)
+Repository: https://github.com/pushkarreddyy/api-rate-limiter-proxy
 """
 
 import logging

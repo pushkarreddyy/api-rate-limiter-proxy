@@ -5,6 +5,9 @@ Uses Redis data structures:
 - Hash for status code counts
 - Sorted Set for top consumer tracking
 - List for recent request log
+
+Author: Pushkar Reddy (@pushkarreddyy)
+Repository: https://github.com/pushkarreddyy/api-rate-limiter-proxy
 """
 
 import json
