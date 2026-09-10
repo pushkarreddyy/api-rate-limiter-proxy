@@ -6,7 +6,7 @@ Creates the app with:
 - Dashboard routes (mounted first so they take priority).
 - Proxy catch-all route (mounted last).
 
-Author: Pushkar Reddy (@pushkarreddyy)
+Author: @pushkarreddyy
 Repository: https://github.com/pushkarreddyy/api-rate-limiter-proxy
 """
 

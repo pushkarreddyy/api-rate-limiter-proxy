@@ -237,12 +237,12 @@ All settings are configurable via environment variables or the `.env` file:
 
 ## Author & Attribution
 
-Created and maintained by **[Pushkar Reddy (@pushkarreddyy)](https://github.com/pushkarreddyy)**.
+Created and maintained by **[@pushkarreddyy](https://github.com/pushkarreddyy)**.
 
 > [!IMPORTANT]
-> **Attribution Requirement**: If you use, fork, adapt, or reference this project or its codebase in your own software, research, or articles, **explicit credit must be given to Pushkar Reddy (@pushkarreddyy)** along with a link back to this original repository:  
+> **Attribution Requirement**: If you use, fork, adapt, or reference this project or its codebase in your own software, research, or articles, **explicit credit must be given to @pushkarreddyy** along with a link back to this original repository:  
 > `https://github.com/pushkarreddyy/api-rate-limiter-proxy`
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details. Attribution to the author (`pushkarreddyy`) must be retained in all copies or substantial portions of the software.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details. Attribution to the author (`@pushkarreddyy`) must be retained in all copies or substantial portions of the software.

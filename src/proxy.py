@@ -4,7 +4,7 @@ Forwards incoming requests to the upstream backend service using httpx.
 Streams both request and response bodies to avoid buffering large payloads
 in memory. Sanitizes hop-by-hop headers per RFC 9110.
 
-Author: Pushkar Reddy (@pushkarreddyy)
+Author: @pushkarreddyy
 Repository: https://github.com/pushkarreddyy/api-rate-limiter-proxy
 """
 

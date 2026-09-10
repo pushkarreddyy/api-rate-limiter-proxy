@@ -6,7 +6,7 @@ Runs before every proxied request to:
 3. Return 429 if the client has exceeded their quota.
 4. After the response is produced, record analytics.
 
-Author: Pushkar Reddy (@pushkarreddyy)
+Author: @pushkarreddyy
 Repository: https://github.com/pushkarreddyy/api-rate-limiter-proxy
 """
 
