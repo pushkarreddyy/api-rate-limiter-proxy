@@ -2,6 +2,9 @@
 
 Provides JSON endpoints for the analytics dashboard and serves
 the static HTML dashboard page.
+
+Author: @pushkarreddyy
+Repository: https://github.com/pushkarreddyy/api-rate-limiter-proxy
 """
 
 from pathlib import Path
@@ -14,6 +17,7 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 
+@router.get("", response_class=HTMLResponse, include_in_schema=False)
 @router.get("/", response_class=HTMLResponse)
 async def dashboard_page() -> FileResponse:
     """Serve the analytics dashboard HTML page."""

@@ -1,4 +1,8 @@
-"""Application configuration using Pydantic Settings."""
+"""Application configuration using Pydantic Settings.
+
+Author: @pushkarreddyy
+Repository: https://github.com/pushkarreddyy/api-rate-limiter-proxy
+"""
 
 from pydantic_settings import BaseSettings
 from functools import lru_cache

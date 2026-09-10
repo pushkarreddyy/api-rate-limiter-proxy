@@ -2,6 +2,9 @@
 
 Run directly: python -m mock_backend.server
 Serves on port 9000.
+
+Author: @pushkarreddyy
+Repository: https://github.com/pushkarreddyy/api-rate-limiter-proxy
 """
 
 import asyncio
