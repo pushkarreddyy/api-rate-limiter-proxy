@@ -190,6 +190,19 @@ Window = 60 seconds, Limit = 100 requests
 
 All three steps run inside an **atomic Lua script** on the Redis server — zero race conditions even under high concurrency.
 
+## Numerical Stability & Edge Case Considerations
+
+Building a production-grade rate limiting reverse proxy requires handling boundary conditions and mathematical anomalies:
+
+| Edge Case | Failure Mode / Risk | Mitigation in Codebase | Source Reference |
+|---|---|---|---|
+| **Sub-millisecond Collisions** | Redis Sorted Sets deduplicate members with identical scores/names, losing request counts under simultaneous bursts. | Appends a unique UUID salt to member keys: `"{timestamp}:{uuid4().hex[:8]}"`. | [`src/rate_limiter.py`](src/rate_limiter.py) |
+| **Clock Skew & Negative Retry-After** | Client/server timestamp jitter could compute negative or zero `Retry-After` seconds. | Enforced lower bound: `if retry_after < 0 then retry_after = 1 end` in Lua script. | [`src/rate_limiter.py`](src/rate_limiter.py) |
+| **Quota Underflow** | Decrementing quota past zero could display negative `X-RateLimit-Remaining` values. | Strict lower clamp: `math.max(0, self.max_requests - current_count)`. | [`src/rate_limiter.py`](src/rate_limiter.py) |
+| **Division-by-Zero in Latency Metrics** | Cold startups with 0 requests cause runtime exceptions when calculating average latencies. | Guarded calculation: `latency_sum / latency_count if latency_count > 0 else 0.0`. | [`src/analytics.py`](src/analytics.py) |
+| **Memory Exhaustion (OOM) via Payload Buffering** | Multi-megabyte file uploads/downloads buffered in RAM cause reverse proxy crashes. | Fully non-blocking chunked streaming using `request.stream()` and `StreamingResponse(upstream_resp.aiter_raw())`. | [`src/proxy.py`](src/proxy.py) |
+| **Hop-by-Hop Header Desync** | Transferring `transfer-encoding` or `connection` headers to upstream triggers protocol corruption. | Strict RFC 9110 / RFC 7230 header sanitization and hop-by-hop stripping. | [`src/proxy.py`](src/proxy.py) |
+
 ## Configuration
 
 All settings are configurable via environment variables or the `.env` file:
